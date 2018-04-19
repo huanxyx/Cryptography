@@ -93,29 +93,11 @@ public class DES {
 	public DES(DESKey key) {
 		this.key = key;
 	}
-
-	/**
-	 * 对字符串进行加密
-	 * 
-	 * @return
-	 */
-	public String encryptString(String str) {
-		return null;
-	}
-
-	/**
-	 * 对字符串进行解密
-	 * 
-	 * @return
-	 */
-	public String decryptString(String str) {
-		return null;
-	}
-
+	
 	/*
 	 * 加密一个分组,数组的每一个元素代表一位
 	 */
-	private byte[] encryptBlock(byte[] plainBit) {
+	public byte[] encryptBlock(byte[] plainBit) {
 		byte[] leftBit = getLeftBit(plainBit);
 		byte[] rightBit = getRightBit(plainBit);
 
@@ -133,7 +115,7 @@ public class DES {
 	/*
 	 * 解密一个分组
 	 */
-	private byte[] decryptBlock(byte[] cipherBit) {
+	public byte[] decryptBlock(byte[] cipherBit) {
 		byte[] leftBit = getLeftBit(cipherBit);
 		byte[] rightBit = getRightBit(cipherBit);
 

@@ -11,14 +11,12 @@ import java.util.Arrays;
  * 		3)SBOX和轮值表			<br/>
  * 		4)列混合使用表			<br/>
  */
-public class AESUtil {
+class AESUtil {
 	
-	private AESUtil() {
-		
-	}
+	private AESUtil() {}
 	
 	//字节替换查找表
-	protected static final int S_BOX[][] = {
+	static final int S_BOX[][] = {
 		    //0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
 		    {0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76}, //0
 		    {0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0}, //1
@@ -40,7 +38,7 @@ public class AESUtil {
 
 	
 	//字节替换查找表（逆）
-	protected static final int IN_S_BOX[][] = {
+	static final int IN_S_BOX[][] = {
 		    //0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
 		    {0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38, 0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb},
 		    {0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87, 0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb},
@@ -61,7 +59,7 @@ public class AESUtil {
 		};
 	
 	//轮值表
-	protected static final int[] RCON = {
+	static final int[] RCON = {
 				0x01000000, 0x02000000,
 				0x04000000, 0x08000000,
 				0x10000000, 0x20000000,
@@ -70,7 +68,7 @@ public class AESUtil {
 		}; 
 	
 	//列混合需要用到的表
-	protected static final int[][] MIX_COL = {
+	static final int[][] MIX_COL = {
 			{ 2, 3, 1, 1},
 			{ 1, 2, 3, 1},
 			{ 1, 1, 2, 3},
@@ -78,7 +76,7 @@ public class AESUtil {
 	};
 	
 	//逆列混合需要用到的表
-	protected static final int[][] IN_MIX_COL = {
+	static final int[][] IN_MIX_COL = {
 			{0xe, 0xb, 0xd, 0x9},
 			{0x9, 0xe, 0xb, 0xd},
 			{0xd, 0x9, 0xe, 0xb},
@@ -88,7 +86,7 @@ public class AESUtil {
 
 	
 	//一个字节的大小
-	protected static final int BYTE_SIZE = 8;
+	static final int BYTE_SIZE = 8;
 	
 	/**
 	 * 根据盒子，置换一个数<br />
@@ -98,7 +96,7 @@ public class AESUtil {
 	 * @param num			数（int）
 	 * @return				置换后的数（int）
 	 */
-	protected static int replaceIntBySBox(int[][] box, int num) {
+	static int replaceIntBySBox(int[][] box, int num) {
 		int temp = 0;
 		for (int i = 0; i < 4; i++) {
 			int currentByte = getByteByPosition(num, i);
@@ -113,7 +111,7 @@ public class AESUtil {
 	 * @param b		单个字节
 	 * @return		置换后的字节
 	 */
-	protected static int replaceByteBySBox(int[][] box, int b) {
+	static int replaceByteBySBox(int[][] box, int b) {
 		int row = (b & 0xf0) >> 4;
 		int col = b & 0xf;
 		return box[row][col];
@@ -125,7 +123,7 @@ public class AESUtil {
 	 * @param step				循环位移的字节数
 	 * @return
 	 */
-	protected static int loopLeftMove(int num, int step) {
+	static int loopLeftMove(int num, int step) {
 		int temp = 0;
 		for (int i = 0; i < 4; i++) {
 			int newPos = (i + step + 4) % 4;
@@ -133,6 +131,106 @@ public class AESUtil {
 			temp |= moveByteByPosition( currentByte, newPos);
 		}
 		return temp;
+	}
+	
+	/**
+	 * 将大小为4的数组往左循环位移
+	 * @param rows			数组（Size = 4）
+	 * @param step			位移的步数
+	 * @return
+	 */
+	static int[] loopLeftMove(int[] rows, int step) {
+		int[] rows2 = new int[4];
+		for (int j = 0; j < 4; j++) {
+			rows2[j] = rows[(step+j+4)%4];
+		}
+		return rows2;
+	}
+	
+
+	
+	/**
+	 * 将4个字节转换为一个int类型(len = 4)<br />
+	 * 开头的为高位
+	 * @param bytes		字节数组
+	 * @param start		开始位置（包括）
+	 * @param len		长度
+	 * @return			转换后的数
+	 */
+	static int translate4ByteTo1Int(byte[] bytes, int start, int len) {
+		int temp = 0;
+		for (int i = start, j = 0; j < len; i++, j++) {
+			temp |= moveByteByPosition(bytes[i], len - 1 - j);
+		}
+		return temp;
+	}
+	
+	/**
+	 * 将一维数组[16]转换为二维数组[4][4] <br/>
+	 * 从列开始转换
+	 * @param origin	字节一维数组[16]
+	 * @return			二维数组[4][4]
+	 */
+	static int[][] translate1To2(byte[] origin) {
+		int[][] temp = new int[4][4];
+		
+		for (int i = 0; i < 16; i++) {
+			int row = i % 4;
+			int col = i / 4;
+			temp[row][col] = origin[i];
+		}
+		return temp;
+	}
+	
+	/**
+	 * 将二维数组[4][4]转换为一维数组[16] <br/>
+	 * 从列开始转换
+	 * @param origin 	二维数组[4][4]
+	 * @return 			字节一维数组[16]
+	 */
+	static byte[] translate2To1(int[][] origin) {
+		byte[] temp = new byte[16];
+		
+		for (int i = 0; i < 16; i++) {
+			int row = i % 4;
+			int col = i / 4;
+			temp[i] = (byte) origin[row][col];
+		}
+		return temp;
+	}
+	
+	
+	/**
+	 * 分割大小为4的整型数组为4*4的字节数组 <br />
+	 * 每个数据分割成一列
+	 * @param data				输入的大小为4的整数数组
+	 * @return					4*4的字节数组
+	 */
+	static int[][] splitIntArr(int[] data) {
+		int[][] data2 = new int[4][4];
+		
+		for (int col = 0; col < 4; col++) {
+			for (int row = 0; row < 4; row++) {
+				data2[row][col] = getByteByPosition(data[col],3 - row); 
+			}
+		}
+		return data2;
+	}
+	
+	/**
+	 * 获取两个矩阵相乘后指定位置的值（基于GF(2^8)域上的运算）
+	 * @param mixCol			第一个矩阵(4*4)
+	 * @param data				第二个矩阵(4*4)
+	 * @param col				新矩阵列坐标(0-3)
+	 * @param row				新矩阵行坐标(0-3)
+	 * @return					新矩阵指定位置的值
+	 */
+	static int matrixCal(int[][] mixCol, int[][] data, int row, int col) {
+		int result = 0;
+		for (int i = 0; i < 4; i++) {
+			result ^= gfMul(mixCol[row][i], data[i][col]);
+		}
+		return result;
 	}
 	
 	/*
@@ -162,105 +260,7 @@ public class AESUtil {
 		return (num & (0xff << delt)) >>> delt;
 	}
 	
-	/**
-	 * 将大小为4的数组往左循环位移
-	 * @param rows			数组（Size = 4）
-	 * @param step			位移的步数
-	 * @return
-	 */
-	protected static int[] loopLeftMove(int[] rows, int step) {
-		int[] rows2 = new int[4];
-		for (int j = 0; j < 4; j++) {
-			rows2[j] = rows[(step+j+4)%4];
-		}
-		return rows2;
-	}
 	
-
-	
-	/**
-	 * 将4个字节转换为一个int类型(len = 4)<br />
-	 * 开头的为高位
-	 * @param bytes		字节数组
-	 * @param start		开始位置（包括）
-	 * @param len		长度
-	 * @return			转换后的数
-	 */
-	protected static int translate4ByteTo1Int(byte[] bytes, int start, int len) {
-		int temp = 0;
-		for (int i = start, j = 0; j < len; i++, j++) {
-			temp |= moveByteByPosition(bytes[i], len - 1 - j);
-		}
-		return temp;
-	}
-	
-	/**
-	 * 将一维数组[16]转换为二维数组[4][4] <br/>
-	 * 从列开始转换
-	 * @param origin	字节一维数组[16]
-	 * @return			二维数组[4][4]
-	 */
-	protected static int[][] translate1To2(byte[] origin) {
-		int[][] temp = new int[4][4];
-		
-		for (int i = 0; i < 16; i++) {
-			int row = i % 4;
-			int col = i / 4;
-			temp[row][col] = origin[i];
-		}
-		return temp;
-	}
-	
-	/**
-	 * 将二维数组[4][4]转换为一维数组[16] <br/>
-	 * 从列开始转换
-	 * @param origin 	二维数组[4][4]
-	 * @return 			字节一维数组[16]
-	 */
-	protected static byte[] translate2To1(int[][] origin) {
-		byte[] temp = new byte[16];
-		
-		for (int i = 0; i < 16; i++) {
-			int row = i % 4;
-			int col = i / 4;
-			temp[i] = (byte) origin[row][col];
-		}
-		return temp;
-	}
-	
-	
-	/**
-	 * 分割大小为4的整型数组为4*4的字节数组 <br />
-	 * 每个数据分割成一列
-	 * @param data				输入的大小为4的整数数组
-	 * @return					4*4的字节数组
-	 */
-	protected static int[][] splitIntArr(int[] data) {
-		int[][] data2 = new int[4][4];
-		
-		for (int col = 0; col < 4; col++) {
-			for (int row = 0; row < 4; row++) {
-				data2[row][col] = getByteByPosition(data[col],3 - row); 
-			}
-		}
-		return data2;
-	}
-	
-	/**
-	 * 获取两个矩阵相乘后指定位置的值（基于GF(2^8)域上的运算）
-	 * @param mixCol			第一个矩阵(4*4)
-	 * @param data				第二个矩阵(4*4)
-	 * @param col				新矩阵列坐标(0-3)
-	 * @param row				新矩阵行坐标(0-3)
-	 * @return					新矩阵指定位置的值
-	 */
-	protected static int matrixCal(int[][] mixCol, int[][] data, int row, int col) {
-		int result = 0;
-		for (int i = 0; i < 4; i++) {
-			result ^= gfMul(mixCol[row][i], data[i][col]);
-		}
-		return result;
-	}
 	
 
 	/*
